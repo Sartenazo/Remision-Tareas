@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2f6b3a">
+<title>Remisión de Tareas</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Partes">
+<meta name="format-detection" content="telephone=no">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="barra">
+  <button id="btnAtras" class="icono oculto" aria-label="Volver">‹</button>
+  <div class="titulo">
+    <strong id="tituloPantalla">Remisión de Tareas</strong>
+    <small id="subtitulo"></small>
+  </div>
+  <span id="estadoRed" class="red" title="Conexión"></span>
+  <button id="btnMenu" class="icono oculto" aria-label="Menú">⋮</button>
+</header>
+
+<!-- ===== LOGIN ===== -->
+<main id="vLogin" class="vista oculto">
+  <div class="tarjeta">
+    <h2>Empezar</h2>
+    <p class="nota"><b>1.</b> Abre el <b>archivo de listas</b> que te ha mandado la oficina (por WhatsApp, correo…). Primero guárdalo en el móvil (“Descargar” o “Guardar en Archivos”).</p>
+    <button type="button" class="principal" id="btnCargarListas">📥 Abrir el archivo de listas</button>
+    <p id="listasCargadas" class="nota oculto"></p>
+    <div id="pasoQuien" class="oculto">
+      <p class="nota"><b>2.</b> ¿Quién eres?</p>
+      <label>Trabajador<select id="loginPersona"></select></label>
+      <button type="button" class="principal" id="btnEntrar">Entrar</button>
+    </div>
+    <p id="loginError" class="error oculto"></p>
+  </div>
+  <div class="tarjeta">
+    <p class="nota" id="notaDemo">¿Solo quieres verla? Pruébala con datos inventados.</p>
+    <button class="secundario" id="btnDemo">Probar en modo demostración</button>
+  </div>
+</main>
+
+<!-- ===== INICIO ===== -->
+<main id="vInicio" class="vista oculto">
+  <div id="avisoDemo" class="aviso oculto">MODO DEMOSTRACIÓN · datos inventados, no se envía nada a la oficina</div>
+  <h3 class="pregunta">¿Qué parte vas a hacer?</h3>
+  <div id="tiposParte" class="tipos"></div>
+  <button type="button" class="principal oculto" id="btnEnviarArchivo">📤 Enviar partes a la oficina</button>
+  <div class="fila dos botones-inicio">
+    <button type="button" class="secundario oculto" id="btnParaje">🗺 Buscar paraje</button>
+    <button type="button" class="secundario" id="btnIrPP">🧭 Ir a una parcela</button>
+  </div>
+  <div id="estadoEnvio" class="estado-envio"></div>
+  <button id="btnInstalar" class="secundario oculto">📲 Instalar la app en el móvil</button>
+  <div id="ayudaIOS" class="tarjeta ios oculto">
+    <b>📲 Instalar en el iPhone</b>
+    <ol>
+      <li>Abre esta página en <b>Safari</b>.</li>
+      <li>Pulsa el botón <b>Compartir</b> <span class="ico-ios">⬆︎</span> (abajo en el centro, o arriba a la derecha en iPad).</li>
+      <li>Elige <b>"Añadir a pantalla de inicio"</b> y pulsa <b>Añadir</b>.</li>
+    </ol>
+    <p class="nota">Después abre la app siempre desde el icono del tractor. Así guarda los partes sin cobertura y no se borran.</p>
+    <button class="secundario" id="btnOcultarIOS" type="button">Entendido</button>
+  </div>
+  <section id="secCurso" class="oculto">
+    <h3>En curso</h3>
+    <ul id="listaCurso" class="lista"></ul>
+  </section>
+  <section>
+    <h3 id="tPendientes">Pendientes de enviar</h3>
+    <ul id="listaPendientes" class="lista"></ul>
+  </section>
+  <section>
+    <h3>Enviados (últimos 30 días)</h3>
+    <ul id="listaEnviados" class="lista"></ul>
+  </section>
+</main>
+
+<!-- ===== PARTE ===== -->
+<main id="vParte" class="vista oculto">
+  <div id="avisoCurso" class="aviso curso oculto"></div>
+  <form id="formParte" novalidate>
+    <div class="tarjeta">
+      <label>Fecha<input id="pFecha" type="date" required></label>
+      <label>Empresa / cliente *</label>
+      <button type="button" class="selector" id="pEmpresa" data-lista="empresas">Elegir empresa…</button>
+      <div id="bloqueMaquina">
+        <label>Máquina</label>
+        <button type="button" class="selector" id="pClase" data-lista="clases">Elegir máquina…</button>
+        <label>Tipo Trabajo *</label>
+        <button type="button" class="selector" id="pFaena" data-lista="faenas">Elegir tipo de trabajo…</button>
+      </div>
+      <div id="bloqueTrat" class="oculto">
+        <label>Tipo de tarea *</label>
+        <button type="button" class="selector" id="pTarea" data-lista="tareas">Elegir tipo de tarea…</button>
+        <label>Equipo</label>
+        <button type="button" class="selector" id="pEquipo" data-lista="equipos">Elegir equipo…</button>
+        <label>Problema fitosanitario<input id="pProblema" maxlength="50" placeholder="Opcional (mildiu, oídio, malas hierbas…)"></label>
+      </div>
+      <div id="bloqueTerceros" class="oculto">
+        <label>Máquina</label>
+        <button type="button" class="selector" id="pClaseT" data-lista="clases">Elegir máquina…</button>
+        <label>Tipo Trabajo *</label>
+        <button type="button" class="selector" id="pTipoTrabajo" data-lista="tipotrabajo">Elegir tipo de trabajo…</button>
+      </div>
+      <div id="bloqueCereal" class="oculto">
+        <label>Cereal *</label>
+        <button type="button" class="selector" id="pCereal" data-lista="cereales">Elegir cereal…</button>
+        <div class="fila dos riego">
+          <button type="button" class="secundario" data-riego="Cereal secano">Secano</button>
+          <button type="button" class="secundario" data-riego="Cereal riego">Riego</button>
+        </div>
+      </div>
+      <div class="ir-parcela">
+        <button type="button" class="secundario" id="btnIrParcela">🧭 Ir a la parcela</button>
+      </div>
+    </div>
+
+    <div class="tarjeta">
+      <div class="cabecera-seccion">
+        <h3>Parcelas</h3>
+        <span id="resumenParcelas" class="nota"></span>
+      </div>
+      <div id="parcelaActiva" class="activa oculto">
+        <div><b id="activaNombre"></b><br><span id="activaTiempo"></span><span id="activaBusca" class="busca oculto"></span></div>
+        <button type="button" class="mini terminar" id="btnParar">✔ Terminar aquí</button>
+      </div>
+      <ul id="listaParcelas" class="parcelas"></ul>
+      <button type="button" class="principal" id="btnElegirParcela">▶ Elegir parcela y empezar</button>
+      <p id="ayudaParcelas" class="nota">Al llegar a cada parcela, pulsa el botón, búscala y elígela: se guarda su ubicación GPS y la hora de entrada. Al elegir otra, la anterior se cierra sola. Si no está en la lista, elige <b>"No está en la lista"</b>: empieza en el momento y se busca con el GPS dónde estás.</p>
+    </div>
+
+    <div class="tarjeta oculto" id="tarjetaProductos">
+      <div class="cabecera-seccion"><h3>Productos</h3></div>
+      <ul id="listaProductos" class="lista productos"></ul>
+      <button type="button" class="secundario" id="btnAddProducto">＋ Añadir producto</button>
+      <p class="nota">Pon la <b>dosis por hectárea</b> (viene rellena con la de la oficina; puedes cambiarla). Se calcula solo: <b>Litros/Kg</b> para 1 ha y para la superficie de las parcelas del parte. Con <b>📄 Ficha</b> se abre la ficha oficial del producto (Registro de Fitosanitarios del Ministerio). Los productos valen para todas las parcelas de este parte; en la oficina se calcula la cantidad de cada parcela.</p>
+    </div>
+
+    <div class="tarjeta">
+      <div id="bloqueKilos">
+      <div class="kilos" id="kilosAuto"><span id="kilosTxt">Kilos transportados</span><b id="kilosSuma">0 kg</b></div>
+      <p class="nota" id="kilosNota">Se suman solos: es el total de las parcelas apuntadas en <b>Kilos</b>.</p>
+      <label id="kilosManual" class="oculto"><span id="kilosManualTxt">Kilos transportados</span><input id="pKilos" type="number" inputmode="decimal" min="0" step="any" placeholder="0"></label>
+      </div>
+      <label>Observaciones<textarea id="pObs" rows="3" maxlength="200"></textarea></label>
+    </div>
+
+    <div class="tarjeta gps">
+      <h3>Ubicación del parte</h3>
+      <p id="gpsEstado" class="nota">Sin ubicación</p>
+      <div class="fila dos">
+        <button type="button" class="secundario" id="btnGps">📍 Tomar ubicación</button>
+        <a id="gpsMapa" class="boton secundario oculto" target="_blank" rel="noopener">Ver en el mapa</a>
+      </div>
+    </div>
+
+    <p id="parteError" class="error oculto"></p>
+    <div class="pie-fijo">
+      <button type="button" class="secundario volver" data-volver>‹ Volver</button>
+      <button type="button" class="peligro oculto" id="btnBorrarParte">Borrar</button>
+      <button type="button" class="secundario" id="btnGuardar">Guardar</button>
+      <button type="button" class="principal" id="btnTerminar">✔ Terminar y enviar</button>
+    </div>
+  </form>
+</main>
+
+<!-- ===== MIS HORAS ===== -->
+<main id="vHoras" class="vista oculto">
+  <div id="avisoHoras" class="aviso curso oculto"></div>
+  <div class="tarjeta">
+    <label>Fecha<input id="hFecha" type="date"></label>
+    <label>Horas trabajadas<input id="hHoras" type="time"></label>
+    <p class="nota">Elige las horas y los minutos que has trabajado hoy (por ejemplo, 08 : 00).</p>
+  </div>
+  <div class="tarjeta">
+    <label class="check"><input type="checkbox" id="hVacaciones"> Vacaciones</label>
+    <label class="check"><input type="checkbox" id="hBaja"> Baja médica</label>
+    <label>Observaciones<textarea id="hObs" rows="2" maxlength="200"></textarea></label>
+  </div>
+  <p id="horasError" class="error oculto"></p>
+  <div class="pie-fijo">
+    <button type="button" class="secundario volver" data-volver>‹ Volver</button>
+    <button type="button" class="peligro oculto" id="hBorrar">Borrar</button>
+    <button type="button" class="secundario" id="hGuardar">Guardar</button>
+    <button type="button" class="principal" id="hEnviar">✔ Enviar</button>
+  </div>
+</main>
+
+<!-- ===== REPARACIONES PENDIENTES ===== -->
+<main id="vRep" class="vista oculto">
+  <div class="tarjeta">
+    <p class="nota">Si ves una avería, apúntala aquí: llega a la oficina (Reparaciones Pendientes) para que sepan lo que hay que reparar.</p>
+    <label>Fecha orden reparación<input id="rFecha" type="date"></label>
+    <label>Máquina *</label>
+    <button type="button" class="selector" id="rEquipo" data-lista="inventario">Elegir máquina…</button>
+    <label>Denominación<input id="rDenom" maxlength="50" readonly placeholder="Se rellena al elegir la máquina"></label>
+    <label for="rRep">Reparación *</label>
+    <div class="con-micro">
+      <textarea id="rRep" rows="3" maxlength="255" placeholder="¿Qué le pasa? Escribe o pulsa 🎤 y habla"></textarea>
+      <button type="button" class="micro" id="rMicro" data-micro="rRep" aria-label="Dictar con la voz">🎤</button>
+    </div>
+    <label>Observaciones<textarea id="rObs" rows="2" maxlength="255"></textarea></label>
+    <label class="check-fin"><input type="checkbox" id="rFin"> Ya está reparada (Finalizado)</label>
+  </div>
+  <button type="button" class="secundario" id="rInforme">📋 Informe de reparaciones pendientes</button>
+  <p id="repError" class="error oculto"></p>
+  <div class="pie-fijo">
+    <button type="button" class="secundario volver" data-volver>‹ Volver</button>
+    <button type="button" class="peligro oculto" id="rBorrar">Borrar</button>
+    <button type="button" class="principal" id="rEnviar">✔ Enviar a la oficina</button>
+  </div>
+</main>
+
+<!-- ===== SELECTOR (lista con buscador) ===== -->
+<div id="dlgIrPP" class="dialogo oculto" role="dialog" aria-modal="true">
+  <form class="dialogo-caja" id="formIrPP" novalidate>
+    <div class="dialogo-cabecera">
+      <strong>🧭 Ir a una parcela</strong>
+      <button type="button" class="icono" id="irPPCerrar" aria-label="Cerrar">✕</button>
+    </div>
+    <label>Provincia<select id="irPPProv"></select></label>
+    <label>Municipio<select id="irPPTermino"></select></label>
+    <div class="fila dos">
+      <label>Polígono<input id="irPPPol" type="number" inputmode="numeric" min="1" required></label>
+      <label>Parcela<input id="irPPParc" type="number" inputmode="numeric" min="1" required></label>
+    </div>
+    <p class="nota">Cualquier parcela rústica de España, aunque no sea de vuestras empresas. Abre Google Maps con la ruta hasta el camino más cercano a ella.</p>
+    <button type="submit" class="principal">🧭 Ir</button>
+  </form>
+</div>
+
+<div id="dlgParaje" class="dialogo oculto" role="dialog" aria-modal="true">
+  <div class="dialogo-caja">
+    <div class="dialogo-cabecera">
+      <strong id="parajeTitulo">Paraje</strong>
+      <button type="button" class="icono" id="parajeCerrar" aria-label="Cerrar">✕</button>
+    </div>
+    <p id="parajeInfo" class="nota"></p>
+    <div id="mapaParaje"></div>
+    <div class="fila dos">
+      <button type="button" class="secundario" id="parajeOtro">🔎 Otro paraje</button>
+      <button type="button" class="principal" id="parajeIr">🧭 Cómo llegar</button>
+    </div>
+  </div>
+</div>
+
+<div id="dlgInfRep" class="dialogo oculto" role="dialog" aria-modal="true">
+  <div class="dialogo-caja informe-rep">
+    <div class="dialogo-cabecera">
+      <strong>📋 Reparaciones pendientes</strong>
+      <button type="button" class="icono" id="infRepCerrar" aria-label="Cerrar">✕</button>
+    </div>
+    <p id="infRepEstado" class="nota"></p>
+    <div id="infRepLista"></div>
+    <button type="button" class="secundario" id="infRepImprimir">🖨 Imprimir / guardar PDF</button>
+  </div>
+</div>
+
+<div id="dlgFicha" class="dialogo oculto" role="dialog" aria-modal="true">
+  <div class="dialogo-caja">
+    <div class="dialogo-cabecera">
+      <strong id="fichaTitulo">Ficha oficial</strong>
+      <button type="button" class="icono" id="fichaCerrar" aria-label="Cerrar">✕</button>
+    </div>
+    <p id="fichaCargando" class="nota">Cargando la ficha del Ministerio…</p>
+    <iframe id="fichaMarco" title="Ficha oficial del producto"></iframe>
+    <a id="fichaPdf" class="nota" target="_blank" rel="noopener">Si no se ve bien, toca aquí para abrir el PDF</a>
+  </div>
+</div>
+
+<div id="dlgSelector" class="dialogo oculto" role="dialog" aria-modal="true">
+  <div class="dialogo-caja">
+    <div class="dialogo-cabecera">
+      <strong id="selTitulo">Elegir</strong>
+      <button type="button" class="icono" id="selCerrar" aria-label="Cerrar">✕</button>
+    </div>
+    <input id="selBuscar" type="search" placeholder="Buscar…" autocomplete="off">
+    <ul id="selLista" class="lista seleccionable"></ul>
+  </div>
+</div>
+
+<!-- ===== PARCELA MANUAL ===== -->
+<div id="dlgParcela" class="dialogo oculto" role="dialog" aria-modal="true">
+  <form class="dialogo-caja" id="formOtraParcela">
+    <div class="dialogo-cabecera"><strong>Parcela que no está en la lista</strong>
+      <button type="button" class="icono" data-cerrar="dlgParcela" aria-label="Cerrar">✕</button></div>
+    <div class="fila dos">
+      <label>Polígono<input id="opPoligono" inputmode="numeric" placeholder="si lo sabes"></label>
+      <label>Parcela<input id="opParcela" inputmode="numeric" placeholder="si lo sabes"></label>
+    </div>
+    <label>Paraje<input id="opParaje"></label>
+    <label>Cultivo<input id="opCultivo"></label>
+    <p class="nota">📍 <b>Ponte dentro de la parcela</b> antes de pulsar Añadir: se guarda tu ubicación y en la oficina se buscan en el <b>Catastro</b> el polígono, la parcela y el paraje. Si no sabes el polígono o la parcela, déjalos en blanco.</p>
+    <button class="principal" type="submit">Añadir</button>
+  </form>
+</div>
+
+<!-- ===== TERMINAR EN UNA PARCELA ===== -->
+<div id="dlgTerminar" class="dialogo oculto" role="dialog" aria-modal="true">
+  <form class="dialogo-caja" id="formTerminar">
+    <div class="dialogo-cabecera"><strong id="terTitulo">Terminar en la parcela</strong>
+      <button type="button" class="icono" id="terCerrar" aria-label="Cerrar">✕</button></div>
+    <p id="terTexto" class="nota"></p>
+    <label>¿A qué hora terminaste?<input id="terHora" type="time" required></label>
+    <p id="terError" class="error oculto"></p>
+    <button class="principal" type="submit" id="terOk">✔ Terminar</button>
+    <button class="secundario" type="button" id="terSigo">Sigo en esta parcela</button>
+  </form>
+</div>
+
+<!-- ===== MENÚ ===== -->
+<div id="dlgMenu" class="dialogo oculto" role="dialog" aria-modal="true">
+  <div class="dialogo-caja">
+    <div class="dialogo-cabecera"><strong id="menuUsuario"></strong>
+      <button type="button" class="icono" data-cerrar="dlgMenu" aria-label="Cerrar">✕</button></div>
+    <p class="nota" id="menuCatalogos"></p>
+    <button class="secundario" id="btnActCatalogos">📥 Cargar listas nuevas de la oficina</button>
+    <button class="secundario" id="btnEnviarYa">📤 Enviar partes a la oficina</button>
+    <button class="secundario" id="btnReenviar">↺ Volver a mandar el último archivo</button>
+    <button class="peligro" id="btnSalir">Cerrar sesión</button>
+  </div>
+</div>
+
+<input type="file" id="archivoListas" accept=".json,application/json,text/plain,*/*" class="oculto">
+
+<div id="dlgEnvio" class="dialogo oculto" role="dialog" aria-modal="true">
+  <div class="dialogo-caja">
+    <div class="dialogo-cabecera"><strong>📤 Enviar a la oficina</strong>
+      <button type="button" class="icono" data-cerrar="dlgEnvio" aria-label="Cerrar">✕</button></div>
+    <p class="nota" id="envioTexto"></p>
+    <button class="principal" id="envioCompartir">Compartir (WhatsApp, correo, Bluetooth…)</button>
+    <button class="secundario" id="envioDescargar">Guardar el archivo en el móvil</button>
+    <div id="envioConfirmar" class="oculto">
+      <p class="nota">¿Se ha mandado bien el archivo a la oficina?</p>
+      <div class="fila dos">
+        <button class="secundario" id="envioNo">No, aún no</button>
+        <button class="principal" id="envioSi">Sí, enviado</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast oculto"></div>
+
+<script src="config.js"></script>
+<script src="db.js"></script>
+<script src="sync.js"></script>
+<script src="demo.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
