@@ -29,6 +29,21 @@
     };
   }
 
+  // Polilínea codificada (formato de Google, 5 decimales) -> [[lon, lat], ...]
+  function decodificar(s) {
+    const pts = []; let i = 0, lat = 0, lon = 0;
+    while (i < s.length) {
+      for (let k = 0; k < 2; k++) {
+        let r = 0, sh = 0, b;
+        do { b = s.charCodeAt(i++) - 63; r |= (b & 0x1f) << sh; sh += 5; } while (b >= 0x20);
+        const d = (r & 1) ? ~(r >> 1) : (r >> 1);
+        if (k === 0) lat += d; else lon += d;
+      }
+      pts.push([lon / 1e5, lat / 1e5]);
+    }
+    return pts;
+  }
+
   g.Sync = {
     configurado: () => true,
     archivo: true,
@@ -42,6 +57,7 @@
       const anterior = await g.BD.leer('catalogos');
       const cat = catDeArchivo(d);
       if (anterior && anterior.entradas) cat.entradas = anterior.entradas;     // entradas guardadas en este móvil
+      if (anterior && anterior.parajes && anterior.parajes.length) cat.parajes = anterior.parajes;
       await g.BD.guardar('catalogos', cat);
       await g.BD.guardar('reparacionesNube', { fecha: cat.fecha, lista: d.reparaciones || [] });
       return cat;
@@ -59,7 +75,24 @@
     // Sin nube: no hay copia de partes en curso ni envío automático
     async guardarBorrador() {}, async borrarBorrador() {}, async recuperarBorradores() { return 0; },
     async enviarPendientes() { return { enviados: 0, errores: 0, sinConexion: false, reintentar: 0 }; },
-    async zonaParaje() { return null; },
+    // Parajes: vienen con la app (parajes.json, sacado de la nube de la oficina principal)
+    async cargarParajes() {
+      let d = await g.BD.leer('parajesArchivo');
+      if (!d) {
+        const r = await fetch('parajes.json', { cache: 'no-cache' });
+        if (!r.ok) throw new Error('No se pudieron cargar los parajes');
+        d = await r.json();
+        await g.BD.guardar('parajesArchivo', d);
+      }
+      return d.parajes.map(p => ({ id: p.id, ine: p.ine, municipio: p.municipio, nombre: p.nombre, n_parcelas: p.n_parcelas,
+        superficie_ha: p.superficie_ha, centro_lat: p.centro_lat, centro_lon: p.centro_lon }));
+    },
+    async zonaParaje(id) {
+      const d = await g.BD.leer('parajesArchivo');
+      const p = d && d.parajes.find(x => x.id === id);
+      if (!p || !p.z || !p.z.length) return null;
+      return { type: 'MultiPolygon', coordinates: p.z.map(poly => poly.map(decodificar)) };
+    },
     async guardarEntrada(e) { return e; },
 
     async reparacionesPendientes() {

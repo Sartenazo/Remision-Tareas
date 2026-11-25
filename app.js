@@ -1538,8 +1538,12 @@ async function terminoActual() {
   return { cod: (tx(d, 'pc1') || '').slice(0, 5), texto: (tx(d, 'ldt') || '').toUpperCase() };
 }
 $('btnParaje').addEventListener('click', async () => {
+  if (cat && !(cat.parajes || []).length && !sesion.demo) {
+    try { cat.parajes = await Sync.cargarParajes(); await BD.guardar('catalogos', cat); }
+    catch (e) { return toast('No se pudieron cargar los parajes. Prueba con conexión.', 4000); }
+  }
   const todos = (cat && cat.parajes) || [];
-  if (!todos.length) return toast('Todavía no hay parajes preparados. Pulsa "Actualizar empresas y parcelas" o avisa a la oficina.', 4500);
+  if (!todos.length) return toast('Todavía no hay parajes preparados.', 4500);
   let aqui = [];
   const terminos = new Set(todos.map(p => p.ine || p.municipio));
   if (terminos.size === 1) aqui = todos;            // solo hay un término preparado: no hace falta mirar dónde estás
