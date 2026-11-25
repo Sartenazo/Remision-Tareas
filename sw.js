@@ -1,5 +1,5 @@
 // Service worker: la app funciona sin conexión y envía partes en segundo plano.
-const VERSION = 'remision-tareas-v3';
+const VERSION = 'remision-tareas-v4';
 const ARCHIVOS = ['./', 'index.html', 'styles.css', 'config.js', 'db.js', 'sync.js', 'demo.js', 'app.js',
   'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 
@@ -17,6 +17,18 @@ self.addEventListener('activate', e => {
 // Las llamadas a Supabase nunca se guardan en caché.
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
+  // Compartir un archivo con la app (WhatsApp, Gmail... > Compartir > Tareas): se guarda y se abre la app
+  if (e.request.method === 'POST' && url.origin === self.location.origin && url.pathname.endsWith('/compartir')) {
+    e.respondWith((async () => {
+      try {
+        const fd = await e.request.formData();
+        const f = fd.get('archivo');
+        if (f && typeof f.text === 'function') await BD.guardar('archivoCompartido', { nombre: f.name || '', texto: await f.text(), fecha: new Date().toISOString() });
+      } catch (err) {}
+      return Response.redirect('./index.html?compartido=1', 303);
+    })());
+    return;
+  }
   if (e.request.method !== 'GET' || url.origin !== self.location.origin) return;
   e.respondWith(
     fetch(e.request.url, { cache: 'no-cache' }).then(r => {      // no-cache: siempre pregunta si hay versión nueva

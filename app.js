@@ -95,6 +95,15 @@ async function iniciar() {
 
   sesion = await BD.leer('sesion');
   cat = await BD.leer('catalogos');
+  const compartido = await BD.leer('archivoCompartido');
+  if (compartido) {                                   // archivo compartido con la app (WhatsApp, Gmail...)
+    await BD.borrar('archivoCompartido');
+    try { history.replaceState(null, '', 'index.html'); } catch (e) {}
+    try {
+      cat = await Sync.cargarListas(compartido.texto);
+      if (sesion) toast('✔ Listas de la oficina cargadas');
+    } catch (e) { setTimeout(() => toast(e.message, 5000), 300); }
+  }
   if (!sesion || !cat) return irLogin();
   irInicio();
 }
