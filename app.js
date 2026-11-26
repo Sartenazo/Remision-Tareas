@@ -101,6 +101,7 @@ async function iniciar() {
     try { history.replaceState(null, '', 'index.html'); } catch (e) {}
     try {
       cat = await Sync.cargarListas(compartido.texto);
+      sesion = await BD.leer('sesion');
       if (sesion) toast('✔ Listas de la oficina cargadas');
     } catch (e) { setTimeout(() => toast(e.message, 5000), 300); }
   }
@@ -135,8 +136,8 @@ $('archivoListas').addEventListener('change', async ev => {
   try {
     const c = await Sync.cargarListas(await f.text());
     if (listasDesde === 'menu' && sesion) {
-      cat = c; cerrarDlg('dlgMenu'); toast('✔ Listas de la oficina cargadas');
-      if (!$('vInicio').classList.contains('oculto')) pintarInicio();
+      cat = c; sesion = await BD.leer('sesion'); cerrarDlg('dlgMenu'); toast('✔ Listas de la oficina cargadas');
+      if (!$('vInicio').classList.contains('oculto')) irInicio();
     } else pintarLogin();
   } catch (e) {
     if (listasDesde === 'menu') toast(e.message, 5000); else mostrarErrorLogin(e.message);

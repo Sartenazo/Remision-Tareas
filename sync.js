@@ -61,6 +61,12 @@
       await g.BD.guardar('catalogos', cat);
       await g.BD.guardar('reparacionesNube', { fecha: cat.fecha, lista: d.reparaciones || [] });
       if (d.correo_oficina) await g.BD.guardar('correoOficina', String(d.correo_oficina).trim());
+      // si en la oficina han corregido el nombre del trabajador, se actualiza aquí (se busca por su clave)
+      const ses = await g.BD.leer('sesion');
+      if (ses && ses.clave && Array.isArray(d.personal)) {
+        const yo = d.personal.find(x => String(x.clave || '') === String(ses.clave));
+        if (yo && (yo.nombre || yo.Nombre) && (yo.nombre || yo.Nombre) !== ses.nombre) { ses.nombre = yo.nombre || yo.Nombre; await g.BD.guardar('sesion', ses); }
+      }
       return cat;
     },
 
