@@ -106,6 +106,7 @@ async function iniciar() {
     } catch (e) { setTimeout(() => toast(e.message, 5000), 300); }
   }
   if (!sesion || !cat) return irLogin();
+  if (compartido && !trabajadorEnListas(cat)) return pedirNombreOtraVez();
   irInicio();
 }
 
@@ -123,6 +124,16 @@ async function pintarLogin() {
   $('loginPersona').innerHTML = personas.map((x, i) => `<option value="${i}">${esc(x.nombre)}</option>`).join('');
   if (c && !c.demo && !personas.length) mostrarErrorLogin('El archivo no trae trabajadores. En la oficina, dad de alta al trabajador en Personal (Activo) y volved a enviar las listas.');
 }
+// ¿Sigue estando este trabajador en las listas de la oficina? (por clave o por nombre)
+function trabajadorEnListas(c) {
+  const ps = (c && c.personal) || [];
+  if (!sesion || !ps.length) return true;
+  return ps.some(x => (sesion.clave && String(x.clave || '') === String(sesion.clave)) || x.nombre === sesion.nombre);
+}
+function pedirNombreOtraVez() {
+  irLogin();
+  mostrarErrorLogin('Tu nombre ha cambiado en la oficina: elígelo otra vez en la lista y pulsa Entrar. No se borra nada.');
+}
 function mostrarErrorLogin(t) { $('loginError').textContent = t; $('loginError').classList.toggle('oculto', !t); }
 const fechaHora = iso => new Date(iso).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' });
 
@@ -136,7 +147,9 @@ $('archivoListas').addEventListener('change', async ev => {
   try {
     const c = await Sync.cargarListas(await f.text());
     if (listasDesde === 'menu' && sesion) {
-      cat = c; sesion = await BD.leer('sesion'); cerrarDlg('dlgMenu'); toast('✔ Listas de la oficina cargadas');
+      cat = c; sesion = await BD.leer('sesion'); cerrarDlg('dlgMenu');
+      if (!trabajadorEnListas(c)) return pedirNombreOtraVez();
+      toast('✔ Listas de la oficina cargadas');
       if (!$('vInicio').classList.contains('oculto')) irInicio();
     } else pintarLogin();
   } catch (e) {
