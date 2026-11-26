@@ -1093,16 +1093,56 @@ async function abrirEnvio(reenviar) {
     const u = await BD.leer('ultimoArchivo');
     if (!u) return toast('Todavía no se ha mandado ningún archivo');
     envioActual = { nombre: u.nombre, texto: u.texto, ids: [], finIds: [], n: 0, reenvio: true };
-    $('envioTexto').textContent = 'Se vuelve a mandar el archivo del ' + fechaHora(u.fecha) + ' (' + u.nombre + '). En la oficina no se duplica nada.';
+    $('envioTexto').textContent = 'Se vuelve a mandar lo del ' + fechaHora(u.fecha) + '. En la oficina no se duplica nada.';
   } else {
     envioActual = await Sync.prepararArchivo();
     if (!envioActual.n) return toast('No hay nada pendiente de mandar 👍');
-    $('envioTexto').textContent = 'Se va a crear el archivo «' + envioActual.nombre + '» con ' + envioActual.n +
-      ' cosa(s) para la oficina. Compártelo por WhatsApp, correo o Bluetooth con la oficina.';
+    $('envioTexto').textContent = 'Hay ' + envioActual.n + ' cosa(s) para mandar a la oficina.';
   }
   $('envioConfirmar').classList.add('oculto');
   abrirDlg('dlgEnvio');
+  // Con el correo de la oficina ya conocido, se abre Gmail directamente
+  if (await BD.leer('correoOficina')) mandarPorGmail();
 }
+
+// ---------- Gmail: el correo sale escrito (para, asunto y datos) y solo hay que pulsar Enviar ----------
+async function pedirCorreoOficina() {
+  const actual = (await BD.leer('correoOficina')) || '';
+  const c = (prompt('Correo de Gmail de la oficina (donde se mandan los partes):', actual) || '').trim();
+  if (!c) return '';
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c)) { toast('Ese correo no parece bien escrito', 3500); return ''; }
+  await BD.guardar('correoOficina', c);
+  return c;
+}
+function base64Utf8(t) {
+  const b = new TextEncoder().encode(t); let s = '';
+  for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+async function mandarPorGmail() {
+  let correo = await BD.leer('correoOficina');
+  if (!correo) correo = await pedirCorreoOficina();
+  if (!correo) return;
+  let datos;
+  try { datos = JSON.stringify(JSON.parse(envioActual.texto)); } catch (e) { datos = envioActual.texto; }
+  const b64 = base64Utf8(datos).replace(/(.{76})/g, '$1\n');
+  const quien = sesion.nombre || 'móvil';
+  const asunto = 'Partes RT - ' + quien + ' - ' + fechaHora(new Date().toISOString());
+  const cuerpo = 'Partes de ' + quien + ' para la oficina (' + (envioActual.n || 'reenvío') + ').\n' +
+    'No hay que tocar nada: Access lo lee solo al pulsar IMPORTAR PARTES.\n\n' +
+    'RT-DATOS-INICIO\n' + b64 + '\nRT-DATOS-FIN\n';
+  const url = 'mailto:' + correo + '?subject=' + encodeURIComponent(asunto) + '&body=' + encodeURIComponent(cuerpo);
+  if (url.length > 180000) {
+    toast('Hay demasiados partes juntos para el correo: usa «Otra forma»', 5000);
+    return;
+  }
+  const a = document.createElement('a');
+  a.href = url; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove();
+  $('envioTexto').textContent = 'Se ha abierto Gmail con todo escrito. Pulsa ENVIAR (➤) en Gmail y vuelve aquí.';
+  $('envioConfirmar').classList.remove('oculto');
+}
+$('envioGmail').addEventListener('click', mandarPorGmail);
+$('envioCambiarCorreo').addEventListener('click', async () => { const c = await pedirCorreoOficina(); if (c) toast('Correo de la oficina: ' + c, 3000); });
 function archivoEnvio() { return new File([envioActual.texto], envioActual.nombre.replace(/\.json$/, '.txt'), { type: 'text/plain' }); }
 $('envioCompartir').addEventListener('click', async () => {
   const f = archivoEnvio();

@@ -60,6 +60,7 @@
       if (anterior && anterior.parajes && anterior.parajes.length) cat.parajes = anterior.parajes;
       await g.BD.guardar('catalogos', cat);
       await g.BD.guardar('reparacionesNube', { fecha: cat.fecha, lista: d.reparaciones || [] });
+      if (d.correo_oficina) await g.BD.guardar('correoOficina', String(d.correo_oficina).trim());
       return cat;
     },
 
