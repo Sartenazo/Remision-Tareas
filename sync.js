@@ -55,6 +55,14 @@
       catch (e) { throw new Error('El archivo no se puede leer. ¿Es el archivo de listas que manda la oficina?'); }
       if (!d || d.formato !== FORMATO_LISTAS) throw new Error('Ese archivo no es de listas de la oficina (Remisión de Tareas).');
       const anterior = await g.BD.leer('catalogos');
+      // ¿Es un archivo viejo o el mismo que ya está cargado?
+      if (anterior && !anterior.demo && anterior.fecha && d.generado && String(d.generado) <= String(anterior.fecha)) {
+        const f = x => { const t = new Date(x); return isNaN(t) ? x : t.toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' }); };
+        const e = new Error('Ese archivo es del ' + f(d.generado) + (String(d.generado) === String(anterior.fecha) ? ', el mismo que ya tienes cargado.' : ', más antiguo que el que ya tienes (' + f(anterior.fecha) + ').') +
+          ' Abre el ÚLTIMO correo de listas, pulsa la flecha ⬇ del adjunto para descargarlo y elige el archivo con la fecha más nueva.');
+        e.viejo = true;
+        throw e;
+      }
       const cat = catDeArchivo(d);
       if (anterior && anterior.entradas) cat.entradas = anterior.entradas;     // entradas guardadas en este móvil
       if (anterior && anterior.parajes && anterior.parajes.length) cat.parajes = anterior.parajes;

@@ -1,5 +1,5 @@
 // Service worker: la app funciona sin conexión y envía partes en segundo plano.
-const VERSION = 'remision-tareas-v8';
+const VERSION = 'remision-tareas-v9';
 const ARCHIVOS = ['./', 'index.html', 'styles.css', 'config.js', 'db.js', 'sync.js', 'demo.js', 'app.js',
   'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 

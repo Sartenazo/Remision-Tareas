@@ -149,11 +149,11 @@ $('archivoListas').addEventListener('change', async ev => {
     if (listasDesde === 'menu' && sesion) {
       cat = c; sesion = await BD.leer('sesion'); cerrarDlg('dlgMenu');
       if (!trabajadorEnListas(c)) return pedirNombreOtraVez();
-      toast('✔ Listas de la oficina cargadas');
+      toast('✔ Listas de la oficina del ' + fechaHora(c.fecha) + ' cargadas', 3500);
       if (!$('vInicio').classList.contains('oculto')) irInicio();
     } else pintarLogin();
   } catch (e) {
-    if (listasDesde === 'menu') toast(e.message, 5000); else mostrarErrorLogin(e.message);
+    if (listasDesde === 'menu') toast(e.message, e.viejo ? 9000 : 5000); else mostrarErrorLogin(e.message);
   }
 });
 $('btnEntrar').addEventListener('click', async () => {
