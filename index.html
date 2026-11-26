@@ -31,8 +31,8 @@
 <main id="vLogin" class="vista oculto">
   <div class="tarjeta">
     <h2>Empezar</h2>
-    <p class="nota"><b>1.</b> Abre el <b>archivo de listas</b> que te ha mandado la oficina (por WhatsApp, correo…). Primero guárdalo en el móvil (“Descargar” o “Guardar en Archivos”).</p>
-    <button type="button" class="principal" id="btnCargarListas">📥 Abrir el archivo de listas</button>
+    <p class="nota"><b>1.</b> Carga el <b>archivo de listas</b> que te ha mandado la oficina por correo.</p>
+    <button type="button" class="principal" id="btnCargarListas">📥 Cargar las listas de la oficina</button>
     <p class="nota">Si no te deja elegir el archivo: instala la app en el móvil y, en WhatsApp o Gmail, mantén pulsado el archivo (o ábrelo) &gt; <b>Compartir</b> &gt; <b>Tareas</b>.</p>
     <p id="listasCargadas" class="nota oculto"></p>
     <div id="pasoQuien" class="oculto">
@@ -348,6 +348,17 @@
         <button class="principal" id="envioSi">Sí, enviado</button>
       </div>
     </div>
+  </div>
+</div>
+
+<div id="dlgListas" class="dialogo oculto" role="dialog" aria-modal="true">
+  <div class="dialogo-caja">
+    <div class="dialogo-cabecera"><strong>📥 Listas nuevas de la oficina</strong>
+      <button type="button" class="icono" data-cerrar="dlgListas" aria-label="Cerrar">✕</button></div>
+    <p class="nota"><b>1.</b> Abre Gmail, entra en el <b>último</b> correo «Listas para el móvil» y pulsa la <b>flecha ⬇</b> del archivo adjunto para descargarlo. Luego vuelve aquí.</p>
+    <a class="boton principal" id="listasGmail" href="#">✉️ Abrir Gmail</a>
+    <p class="nota" id="listasPaso2"><b>2.</b> Elige el archivo descargado (el de fecha más nueva, en <b>Descargas</b>).</p>
+    <button type="button" class="secundario" id="listasElegir">📂 Elegir el archivo descargado</button>
   </div>
 </div>
 

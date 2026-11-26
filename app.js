@@ -139,7 +139,26 @@ const fechaHora = iso => new Date(iso).toLocaleString('es-ES', { dateStyle: 'sho
 
 // Archivo de listas de la oficina (al empezar y desde el menú)
 let listasDesde = 'login';
-$('btnCargarListas').addEventListener('click', () => { listasDesde = 'login'; mostrarErrorLogin(''); $('archivoListas').click(); });
+$('btnCargarListas').addEventListener('click', () => { listasDesde = 'login'; mostrarErrorLogin(''); abrirDlgListas(); });
+
+// Paso 1: abrir Gmail para descargar el adjunto · Paso 2: elegir el archivo descargado
+const esAndroid = /Android/i.test(navigator.userAgent);
+$('listasGmail').href = esAndroid
+  ? 'intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.google.android.gm;S.browser_fallback_url=' + encodeURIComponent('https://mail.google.com/') + ';end'
+  : 'https://mail.google.com/';
+$('listasGmail').target = esAndroid ? '' : '_blank';
+let listasGmailAbierto = false;
+function abrirDlgListas() {
+  listasGmailAbierto = false;
+  $('listasElegir').className = 'secundario';
+  abrirDlg('dlgListas');
+}
+$('listasGmail').addEventListener('click', () => { listasGmailAbierto = true; });
+document.addEventListener('visibilitychange', () => {
+  // al volver de Gmail, el paso 2 queda destacado
+  if (document.visibilityState === 'visible' && listasGmailAbierto && !$('dlgListas').classList.contains('oculto')) $('listasElegir').className = 'principal';
+});
+$('listasElegir').addEventListener('click', () => { cerrarDlg('dlgListas'); $('archivoListas').click(); });
 $('archivoListas').addEventListener('change', async ev => {
   const f = ev.target.files && ev.target.files[0];
   ev.target.value = '';
@@ -1204,7 +1223,7 @@ $('btnMenu').addEventListener('click', async () => {
 });
 $('btnActCatalogos').addEventListener('click', () => {
   if (sesion.demo) { toast('En modo demostración los datos son fijos'); return; }
-  listasDesde = 'menu'; $('archivoListas').click();
+  listasDesde = 'menu'; cerrarDlg('dlgMenu'); abrirDlgListas();
 });
 $('btnEnviarYa').addEventListener('click', () => { cerrarDlg('dlgMenu'); abrirEnvio(false); });
 $('btnSalir').addEventListener('click', async () => {
